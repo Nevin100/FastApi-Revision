@@ -10,6 +10,8 @@ def load_Data():
     with open("./patients.json", "r") as f:
         return json.load(f)
 
+# Base Model : Patient
+
 # Root endpoint
 @app.get("/")
 def hello_world():
@@ -38,4 +40,25 @@ def get_patient_by_id(patient_id: str):
     return {
         "message": "Patient found",
         "data": data[patient_id]
+    }
+
+# Endpoint to Create a Patient
+@app.post("/create-patient", statrus_code= status.HTTP_201_CREATED)
+def create_patient(patient: dict):
+    data = load_Data()
+
+    if patient["id"] in data:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Patient with this ID already exists"
+        )
+
+    data[patient["id"]] = patient
+
+    with open("./patients.json", "w") as f:
+        json.dump(data, f, indent=4)
+
+    return {
+        "message": "Patient created successfully",
+        "data": patient
     }
