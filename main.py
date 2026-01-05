@@ -26,6 +26,28 @@ def view_data():
         "data": data
     }
 
+# Query Parameters endpoint to view patients with sorting : 
+@app.get("/view", status_code=status.HTTP_200_OK)
+def viewQueryGetPatients(sort_by: str = None): # Optional query parameter for sorting
+    data = load_Data()
+    patients = list(data.values())
+
+    if sort_by:
+        if sort_by not in patients[0]:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Invalid sort_by field: {sort_by}"
+            )
+        # Sort patients by the specified field
+        # lambda function to extract the sort_by field from each patient dictionary
+        patients.sort(key=lambda x: x[sort_by])
+
+    return {
+        "message": "Data loaded successfully",
+        "data": patients
+    }
+
+
 # Endpoint to get patient by ID
 @app.get("/get-patient/{patient_id}", status_code=status.HTTP_200_OK)
 def get_patient_by_id(patient_id: str):
@@ -43,7 +65,7 @@ def get_patient_by_id(patient_id: str):
     }
 
 # Endpoint to Create a Patient
-@app.post("/create-patient", statrus_code= status.HTTP_201_CREATED)
+@app.post("/create-patient", status_code= status.HTTP_201_CREATED)
 def create_patient(patient: dict):
     data = load_Data()
 
