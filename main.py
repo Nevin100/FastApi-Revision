@@ -84,3 +84,4 @@ def create_patient(patient: dict):
         "message": "Patient created successfully",
         "data": patient
     }
+
