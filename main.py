@@ -1,6 +1,7 @@
-# main.py
 from fastapi import FastAPI, HTTPException, status
 import json
+from pydantic import BaseModel, Field, computed_field
+from typing import Annotated
 
 # Initialize FastAPI app
 app = FastAPI()
@@ -9,9 +10,35 @@ app = FastAPI()
 def load_Data():
     with open("./patients.json", "r") as f:
         return json.load(f)
-
+        
 # Base Model : Patient
+class Patient(BaseModel):
 
+    id: Annotated[str, Field(..., description = "Required an ID to identify the patient")]
+    name: Annotated[str, Field(...,max_length=20, description = "Name should be less than 20 characters")]  
+    city: Annotated[str, Field(..., max_length=14, description = "The Patient's City")]
+    age: Annotated[int, Field(..., gt = 0, description = "Age must be greater than 0")]
+    gender: Annotated[str, Field(..., description = "Specify the Gender")]
+    height: Annotated[int, Field(..., description = "Specify the Height in metres")]
+    weight: Annotated[int, Field(..., description = "Specify the weight in kgs")]
+
+    @computed_field
+    @property
+    def bmi(self) -> float:
+        bmi =  round(self.weight/(self.height*self.height),2)
+
+    @computed_field
+    @property
+    def verdict(self) -> str:
+        if( self.bmi < 18.5):
+            return "UnderWeight"
+        elif (self.bmi < 25):
+            return "Normal"
+        elif (self.bmi < 30):
+            return "OverWeight"
+        else:
+            return "Obese"
+             
 # Root endpoint
 @app.get("/")
 def hello_world():
@@ -38,6 +65,7 @@ def viewQueryGetPatients(sort_by: str = None): # Optional query parameter for so
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=f"Invalid sort_by field: {sort_by}"
             )
+        
         # Sort patients by the specified field
         # lambda function to extract the sort_by field from each patient dictionary
         patients.sort(key=lambda x: x[sort_by])
@@ -65,23 +93,51 @@ def get_patient_by_id(patient_id: str):
     }
 
 # Endpoint to Create a Patient
-@app.post("/create-patient", status_code= status.HTTP_201_CREATED)
-def create_patient(patient: dict):
+# @app.post("/create-patient", status_code= status.HTTP_201_CREATED)
+# def create_patient(patient: dict):
+#     data = load_Data()
+
+#     if patient["id"] in data:
+#         raise HTTPException(
+#             status_code=status.HTTP_400_BAD_REQUEST,
+#             detail="Patient with this ID already exists"
+#         )
+
+#     data[patient["id"]] = patient
+
+#     # indent: 4 for pretty printing
+#     with open("./patients.json", "w") as f:
+#         json.dump(data, f, indent=4)
+
+#     return {
+#         "message": "Patient created successfully",
+#         "data": patient
+#     }
+
+# Endpoint to Create a Patient using a BaseModel Schema
+@app.put("/create-patient", status_code = status.HTTP_201_CREATED)
+def create_patient(patient : Patient):
     data = load_Data()
 
-    if patient["id"] in data:
+    if patient.id in data:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Patient with this ID already exists"
+            detail="Patient with this Id already exists"
         )
-
-    data[patient["id"]] = patient
+    
+    data[patient.id] = patient.model_dump()
 
     with open("./patients.json", "w") as f:
-        json.dump(data, f, indent=4)
+        json.dump(data, f, indent = 4)
 
     return {
-        "message": "Patient created successfully",
-        "data": patient
+        "message":"Patient Created Successfully",
+        "data":patient
     }
 
+#Endpoint to Update a Patient using a BaseModel Schema
+@app.put("/update-patient/{patient_id}", status_code=status.HTTP_200_OK)
+def update_patient(patient_id : str, patient: Patient):
+    data = load_Data()
+
+    if patient
