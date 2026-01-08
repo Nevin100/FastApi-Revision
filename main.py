@@ -92,27 +92,27 @@ def get_patient_by_id(patient_id: str):
         "data": data[patient_id]
     }
 
-# Endpoint to Create a Patient
-# @app.post("/create-patient", status_code= status.HTTP_201_CREATED)
-# def create_patient(patient: dict):
-#     data = load_Data()
+# Endpoint to Create a Patient without Base Model
+@app.post("/create-patient", status_code= status.HTTP_201_CREATED)
+def create_patient(patient: dict):
+    data = load_Data()
 
-#     if patient["id"] in data:
-#         raise HTTPException(
-#             status_code=status.HTTP_400_BAD_REQUEST,
-#             detail="Patient with this ID already exists"
-#         )
+    if patient["id"] in data:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Patient with this ID already exists"
+        )
 
-#     data[patient["id"]] = patient
+    data[patient["id"]] = patient
 
-#     # indent: 4 for pretty printing
-#     with open("./patients.json", "w") as f:
-#         json.dump(data, f, indent=4)
+    # indent: 4 for pretty printing
+    with open("./patients.json", "w") as f:
+        json.dump(data, f, indent=4)
 
-#     return {
-#         "message": "Patient created successfully",
-#         "data": patient
-#     }
+    return {
+        "message": "Patient created successfully",
+        "data": patient
+    }
 
 # Endpoint to Create a Patient using a BaseModel Schema
 @app.put("/create-patient", status_code = status.HTTP_201_CREATED)
