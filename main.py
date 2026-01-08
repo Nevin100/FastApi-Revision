@@ -135,9 +135,59 @@ def create_patient(patient : Patient):
         "data":patient
     }
 
-#Endpoint to Update a Patient using a BaseModel Schema
+# Endpoint to Update a Patient using a BaseModel Schema
 @app.put("/update-patient/{patient_id}", status_code=status.HTTP_200_OK)
-def update_patient(patient_id : str, patient: Patient):
+def update_patient(patient_id: str, patient: Patient):
+    # Load existing patient data from JSON file
     data = load_Data()
 
-    if patient
+    # Check if patient exists
+    if patient_id not in data:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Patient does not exist"
+        )
+
+    # Ensure path ID and body ID are same (data consistency)
+    if patient_id != patient.id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Patient ID in path and body must be same"
+        )
+
+    # Update patient data
+    data[patient_id] = patient.model_dump()
+
+    # Write updated data back to JSON file
+    with open("./patients.json", "w") as f:
+        json.dump(data, f, indent=4)
+
+    return {
+        "message": "Patient updated successfully",
+        "data": patient
+    }
+
+# Endpoint to Delete a Patient by ID
+@app.delete("/delete-patient/{patient_id}", status_code=status.HTTP_200_OK)
+def delete_patient(patient_id: str):
+    # Load existing patient data from JSON file
+    data = load_Data()
+
+    # Check if patient exists
+    if patient_id not in data:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Patient not found"
+        )
+
+    # Delete patient from data
+    deleted_patient = data.pop(patient_id)
+
+    # Write updated data back to JSON file
+    with open("./patients.json", "w") as f:
+        json.dump(data, f, indent=4)
+
+    return {
+        "message": "Patient deleted successfully",
+        "data": deleted_patient
+    }
